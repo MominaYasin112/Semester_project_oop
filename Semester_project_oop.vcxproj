@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -17,7 +17,6 @@
       <Configuration>Release</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
-
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
@@ -53,27 +52,24 @@
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
-
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
-  <ImportGroup Label="Shared" >
+  <ImportGroup Label="Shared">
   </ImportGroup>
-    <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-      <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    </ImportGroup>
-    <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-      <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    </ImportGroup>
-    <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-      <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    </ImportGroup>
-    <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-      <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    </ImportGroup>
-
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -108,10 +104,14 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>C:\Users\DELL\Downloads\glfw-3.4.bin.WIN64\glfw-3.4.bin.WIN64\include;C:\Users\DELL\Downloads\imgui-master\imgui-master\backends;C:\Users\DELL\Downloads\imgui-master\imgui-master</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>C:\Users\DELL\Downloads\glfw-3.4.bin.WIN64\glfw-3.4.bin.WIN64\lib-vc2022</AdditionalLibraryDirectories>
+      <AdditionalDependencies>$(CoreLibraryDependencies);glfw3.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -130,8 +130,86 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
-
-  <ItemGroup></ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Admin.cpp" />
+    <ClCompile Include="AppException.cpp" />
+    <ClCompile Include="AuthenticationManager.cpp" />
+    <ClCompile Include="AuthException.cpp" />
+    <ClCompile Include="BinaryLogger.cpp" />
+    <ClCompile Include="ChatBox.cpp" />
+    <ClCompile Include="ChatManager.cpp" />
+    <ClCompile Include="DateTime.cpp" />
+    <ClCompile Include="DummyClient.cpp" />
+    <ClCompile Include="DummyServer.cpp" />
+    <ClCompile Include="Dynamic_array.cpp" />
+    <ClCompile Include="Exchange.cpp" />
+    <ClCompile Include="ExchangeManager.cpp" />
+    <ClCompile Include="glad.c" />
+    <ClCompile Include="GreedyMatcher.cpp" />
+    <ClCompile Include="HangarianMatcher.cpp" />
+    <ClCompile Include="imgui.cpp" />
+    <ClCompile Include="imgui_draw.cpp" />
+    <ClCompile Include="imgui_impl_glfw.cpp" />
+    <ClCompile Include="imgui_impl_gulw.cpp" />
+    <ClCompile Include="imgui_impl_opengl3.cpp" />
+    <ClCompile Include="imgui_tables.cpp" />
+    <ClCompile Include="imgui_widgets.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="Match.cpp" />
+    <ClCompile Include="MatchingEngine.cpp" />
+    <ClCompile Include="Message.cpp" />
+    <ClCompile Include="OfferedSkills.cpp" />
+    <ClCompile Include="RequestedSkills.cpp" />
+    <ClCompile Include="Skill.cpp" />
+    <ClCompile Include="SkillExchangeApplication.cpp" />
+    <ClCompile Include="SkillRepository.cpp" />
+    <ClCompile Include="Socket.cpp" />
+    <ClCompile Include="Str.cpp" />
+    <ClCompile Include="Student.cpp" />
+    <ClCompile Include="TimeSlot.cpp" />
+    <ClCompile Include="try.cpp" />
+    <ClCompile Include="User.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Admin.h" />
+    <ClInclude Include="AppException.h" />
+    <ClInclude Include="AuthenticationManager.h" />
+    <ClInclude Include="AuthException.h" />
+    <ClInclude Include="BinaryLogger.h" />
+    <ClInclude Include="ChatBox.h" />
+    <ClInclude Include="ChatManager.h" />
+    <ClInclude Include="DateTime.h" />
+    <ClInclude Include="DummyClient.h" />
+    <ClInclude Include="DummyServer.h" />
+    <ClInclude Include="Dynamic_array.h" />
+    <ClInclude Include="Exchange.h" />
+    <ClInclude Include="ExchangeManager.h" />
+    <ClInclude Include="GreedyMatcher.h" />
+    <ClInclude Include="HungarianMatcher.h" />
+    <ClInclude Include="imconfig.h" />
+    <ClInclude Include="imgui.h" />
+    <ClInclude Include="imgui_impl_glfw.h" />
+    <ClInclude Include="imgui_impl_opengl3.h" />
+    <ClInclude Include="imgui_impl_opengl3_loader.h" />
+    <ClInclude Include="imgui_internal.h" />
+    <ClInclude Include="imstb_rectpack.h" />
+    <ClInclude Include="Match.h" />
+    <ClInclude Include="Matcher.h" />
+    <ClInclude Include="MatchingEngine.h" />
+    <ClInclude Include="Message.h" />
+    <ClInclude Include="OfferedSkills.h" />
+    <ClInclude Include="RequestedSkills.h" />
+    <ClInclude Include="Skill.h" />
+    <ClInclude Include="SkillExchangeApplication.h" />
+    <ClInclude Include="SkillRepository.h" />
+    <ClInclude Include="Socket.h" />
+    <ClInclude Include="stb_rect_pack.h" />
+    <ClInclude Include="Str.h" />
+    <ClInclude Include="Student.h" />
+    <ClInclude Include="TimeSlot.h" />
+    <ClInclude Include="UIComponent.h" />
+    <ClInclude Include="User.h" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
