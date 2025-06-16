@@ -1,162 +1,141 @@
 ﻿#include "HungarianMatcher.h"
-#include <limits>
+
+unsigned HungarianMatcher::simpleHash(const Str& str) {
+    unsigned hash = 0;
+    const char* s = str.return_array();
+    while (*s) {
+        hash = hash * 31 + *s++;
+    }
+    return hash;
+}
+
 int HungarianMatcher::findBidirectionalSkillScore(Student* a, Student* b) {
     bool a_requests_b = false;
     bool b_requests_a = false;
     Str commonSkill;
 
-    std::cout << "[MATCH CHECK] " << a->getEmail().return_array()
-        << " vs " << b->getEmail().return_array() << std::endl;
-
+    // Check if a requests something b offers
     for (int i = 0; i < a->getRequestedSkills().size(); ++i) {
         for (int j = 0; j < b->getOfferedSkills().size(); ++j) {
-            std::cout << "    " << a->getRequestedSkills()[i]->getName().return_array()
-                << " ?== " << b->getOfferedSkills()[j]->getName().return_array() << std::endl;
-            if (a->getRequestedSkills()[i]->getName().is_equal(b->getOfferedSkills()[j]->getName())) {
+            if (a->getRequestedSkills()[i]->getName() == b->getOfferedSkills()[j]->getName()) {
                 a_requests_b = true;
                 commonSkill = a->getRequestedSkills()[i]->getName();
-                std::cout << " a requests skill offered by b: " << commonSkill.return_array() << std::endl;
                 break;
             }
         }
         if (a_requests_b) break;
     }
-
     for (int i = 0; i < b->getRequestedSkills().size(); ++i) {
         for (int j = 0; j < a->getOfferedSkills().size(); ++j) {
-            std::cout << "    " << b->getRequestedSkills()[i]->getName().return_array()
-                << " ?== " << a->getOfferedSkills()[j]->getName().return_array() << std::endl;
-            if (b->getRequestedSkills()[i]->getName().is_equal(a->getOfferedSkills()[j]->getName())) {
+            if (b->getRequestedSkills()[i]->getName() == a->getOfferedSkills()[j]->getName()) {
                 b_requests_a = true;
-                std::cout << " b requests skill offered by a" << std::endl;
                 break;
             }
         }
         if (b_requests_a) break;
     }
 
-    if (a_requests_b && b_requests_a) {
-        std::cout << "Bidirectional Match Found Between "
-            << a->getEmail().return_array() << " and "
-            << b->getEmail().return_array() << " for "
-            << commonSkill.return_array() << std::endl;
-    }
-
     return (a_requests_b && b_requests_a) ?
-        (a->getReputationPoints() + b->getReputationPoints()) / 2 :
+        (a->getReputationPoints() + b->getReputationPoints()) :
         0;
 }
 
-int** HungarianMatcher::createCostMatrix(const Dynamic_array<Student*>& students, int& size) {
-    size = students.size();
-    int** costMatrix = new int* [size];
-    for (int i = 0; i < size; ++i) {
-        costMatrix[i] = new int[size];
-        for (int j = 0; j < size; ++j) {
-            if (i == j) {
-                costMatrix[i][j] = std::numeric_limits<int>::max();
-            }
-            else {
-                costMatrix[i][j] = -findBidirectionalSkillScore(students[i], students[j]);
-            }
-        }
-    }
-    return costMatrix;
-}
-void HungarianMatcher::freeCostMatrix(int** matrix, int size) {
-    for (int i = 0; i < size; ++i) {
-        delete[] matrix[i];
-    }
-    delete[] matrix;
-}
-Dynamic_array<int> HungarianMatcher::hungarianAlgorithm(int** costMatrix, int size) {
-    const int INF = std::numeric_limits<int>::max();
-    Dynamic_array<int> u(size + 1, 0);
-    Dynamic_array<int> v(size + 1, 0);
-    Dynamic_array<int> p(size + 1, 0);
-    Dynamic_array<int> way(size + 1, 0);
-
-    for (int i = 1; i <= size; ++i) {
-        p[0] = i;
-        int j0 = 0;
-        Dynamic_array<int> minv(size + 1, INF);
-        Dynamic_array<bool> used(size + 1, false);
-
-        do {
-            used[j0] = true;
-            int i0 = p[j0], delta = INF, j1 = 0;
-            for (int j = 1; j <= size; ++j) {
-                if (!used[j]) {
-                    int cur = costMatrix[i0 - 1][j - 1] - u[i0] - v[j];
-                    if (cur < minv[j]) {
-                        minv[j] = cur;
-                        way[j] = j0;
-                    }
-                    if (minv[j] < delta) {
-                        delta = minv[j];
-                        j1 = j;
-                    }
-                }
-            }
-
-            for (int j = 0; j <= size; ++j) {
-                if (used[j]) {
-                    u[p[j]] += delta;
-                    v[j] -= delta;
-                }
-                else {
-                    minv[j] -= delta;
-                }
-            }
-            j0 = j1;
-        } while (p[j0] != 0);
-        do {
-            int j1 = way[j0];
-            p[j0] = p[j1];
-            j0 = j1;
-        } while (j0 != 0);
-    }
-    Dynamic_array<int> result(size, -1);
-    for (int j = 1; j <= size; ++j) {
-        if (p[j] != 0 && p[j] - 1 != j - 1) {
-            result[p[j] - 1] = j - 1;
-        }
-    }
-
-    return result;
-}
-
-Dynamic_array<Match*> HungarianMatcher::generateOptimizedMatches(Dynamic_array<Student*>& students) {
-    int size;
-    int** costMatrix = createCostMatrix(students, size);
-    Dynamic_array<int> matches = hungarianAlgorithm(costMatrix, size);
-    std::cout << "=== Final Match Pairs ===" << std::endl;
-    for (int i = 0; i < size; ++i) {
-        std::cout << "Student[" << i << "] (" << students[i]->getEmail().return_array() << ") matched with "
-            << "Student[" << matches[i] << "]" << std::endl;
-    }
-
-    Dynamic_array<Match*> result;
-    for (int i = 0; i < size; ++i) {
-        int j = matches[i];
-        if (j != -1 && i != j) {
-            Str matchSkill = findCommonSkill(students[i], students[j]);
-            int score = findBidirectionalSkillScore(students[i], students[j]);
-            result.push(new Match(students[i], students[j], matchSkill, score));
-        }
-    }
-
-    freeCostMatrix(costMatrix, size);
-    return result;
-}
 Dynamic_array<Match*> HungarianMatcher::generateMatches(Dynamic_array<Student*>& students) {
-    return generateOptimizedMatches(students);
+  
+    std::cout << "DEBUG: Generating matches between " << students.size() << " students\n";
+
+    Dynamic_array<Match*> possibleMatches;
+
+    for (int i = 0; i < students.size(); ++i) {
+        for (int j = i + 1; j < students.size(); ++j) {
+            // Check both directions
+            Str skill1 = findCommonSkill(students[i], students[j]);
+            Str skill2 = findCommonSkill(students[j], students[i]);
+
+            if (!skill1.empty()) {
+                possibleMatches.push(new Match(
+                    students[i],
+                    students[j],
+                    skill1,
+                    students[i]->getReputationPoints() + students[j]->getReputationPoints()
+                ));
+            }
+
+            if (!skill2.empty()) {
+                possibleMatches.push(new Match(
+                    students[j],
+                    students[i],
+                    skill2,
+                    students[i]->getReputationPoints() + students[j]->getReputationPoints()
+                ));
+            }
+        }
+    }
+
+    Dynamic_array<Match*> finalMatches;
+
+    if (!possibleMatches.isEmpty()) {
+        // Select the match with highest score
+        int maxScore = 0;
+        for (int i = 0; i < possibleMatches.size(); ++i) {
+            if (possibleMatches[i]->getScore() > maxScore) {
+                maxScore = possibleMatches[i]->getScore();
+            }
+        }
+
+        // Collect all matches with max score
+        Dynamic_array<Match*> bestMatches;
+        for (int i = 0; i < possibleMatches.size(); ++i) {
+            if (possibleMatches[i]->getScore() == maxScore) {
+                bestMatches.push(possibleMatches[i]);
+            }
+        }
+
+        // Select one match (deterministically) if multiple have same score
+        if (!bestMatches.isEmpty()) {
+            unsigned bestHash = 0;
+            int bestIndex = 0;
+
+            for (int i = 0; i < bestMatches.size(); ++i) {
+                Str combinedEmail = bestMatches[i]->getRequester()->getEmail() +
+                    bestMatches[i]->getProvider()->getEmail();
+                unsigned currentHash = simpleHash(combinedEmail);
+
+                if (currentHash > bestHash) {
+                    bestHash = currentHash;
+                    bestIndex = i;
+                }
+            }
+            finalMatches.push(bestMatches[bestIndex]);
+        }
+
+        // Clean up unused matches
+        for (int i = 0; i < possibleMatches.size(); ++i) {
+            bool isUsed = false;
+            for (int j = 0; j < finalMatches.size(); ++j) {
+                if (possibleMatches[i] == finalMatches[j]) {
+                    isUsed = true;
+                    break;
+                }
+            }
+            if (!isUsed) {
+                delete possibleMatches[i];
+            }
+        }
+    }
+
+    return finalMatches;
 }
-Str HungarianMatcher::findCommonSkill(Student* a, Student* b) {
-    for (int i = 0; i < a->getRequestedSkills().size(); ++i) {
-        for (int j = 0; j < b->getOfferedSkills().size(); ++j) {
-            if (a->getRequestedSkills()[i]->getName().is_equal(b->getOfferedSkills()[j]->getName())) {
-                return a->getRequestedSkills()[i]->getName();
+
+Str HungarianMatcher::findCommonSkill(Student* requester, Student* provider) {
+    for (auto reqSkill : requester->getRequestedSkills()) {
+        for (auto provSkill : provider->getOfferedSkills()) {
+            if (reqSkill->getName() == provSkill->getName()) {
+                std::cout << "Correct match: "
+                    << requester->getEmail().return_array() << " wants "
+                    << reqSkill->getName().return_array() << " which "
+                    << provider->getEmail().return_array() << " offers\n";
+                return reqSkill->getName();
             }
         }
     }

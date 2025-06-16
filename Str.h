@@ -72,6 +72,10 @@ public:
 	void writeToBinary(ofstream& out) const;
 	void readFromBinary(ifstream& in);
 	Str substring(int start, int end) const;
+	bool operator>(const Str& other) const;
+	bool operator<(const Str& other) const;
+	bool operator>=(const Str& other) const;
+	bool operator<=(const Str& other) const;
 };
 #endif
 

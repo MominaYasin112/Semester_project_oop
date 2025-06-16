@@ -431,8 +431,21 @@ public:
 
         ImGui::End();
     }
+    void showMessage(const char* message) {
+        static bool showPopup = true;
 
-    // Callback setter
+        if (showPopup) {
+            ImGui::OpenPopup("System Message");
+            if (ImGui::BeginPopupModal("System Message", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+                ImGui::Text("%s", message);
+                if (ImGui::Button("OK", ImVec2(120, 0))) {
+                    showPopup = false;
+                    ImGui::CloseCurrentPopup();
+                }
+                ImGui::EndPopup();
+            }
+        }
+    }
     void setOnMatchClick(std::function<void()> cb) {
         skillMatchBtn = Button(skillMatchBtn.getId(), "Find Matches",
             [this, cb]() { matchButtonPressed = true; if (cb) cb(); });

@@ -12,35 +12,42 @@ ChatManager::~ChatManager() {
         delete chatBoxes[i];
     }
 }
-
-ChatBox* ChatManager::loadOrCreateChat(const Str& u1, const Str& u2) {
-    // Check existing chats first
-    for (auto* chat : chatBoxes) {
-        if (chat->involves(u1, u2)) {
-            return chat;
-        }
+Str ChatManager::getChatFilename(const Str& user1, const Str& user2) {
+    Str email1 = user1;
+    Str email2 = user2;
+    if (email1 > email2) {
+        Str temp = email1;
+        email1 = email2;
+        email2 = temp;
     }
-    ChatBox* newBox = new ChatBox(u1, u2);
-    Str filename1 = Str("chat_").concat(u1).concat("_").concat(u2).concat(".bin");
-    Str filename2 = Str("chat_").concat(u2).concat("_").concat(u1).concat(".bin");
+    Str filename = "chat_";
+    filename = filename.concat(email1);
+    filename = filename.concat("_");
+    filename = filename.concat(email2);
+    filename = filename.concat(".bin");
 
-    ifstream in;
-    in.open(filename1.return_array(), ios::binary);
-    if (!in) {
-        in.open(filename2.return_array(), ios::binary);
+    return filename;
+}
+ChatBox* ChatManager::loadOrCreateChat(const Str& user1, const Str& user2) {
+    Str filename = getChatFilename(user1, user2);
+    if (filename.length(filename.return_array()) < 10) {
+        throw NetworkException("Invalid chat filename");
     }
 
-    if (in) {
+    std::ifstream in(filename.return_array(), std::ios::binary);
+    if (in.good()) {
         try {
-            newBox->readFromBinary(in);
+            ChatBox* box = new ChatBox();
+            box->readFromBinary(in);
+            in.close();
+            return box;
         }
-        catch (const std::exception& e) {
-            std::cerr << "Warning: Failed to load chat - " << e.what() << "\n";
+        catch (...) {
+            in.close();
+            return new ChatBox(user1, user2);
         }
-        in.close();
     }
-    chatBoxes.push(newBox);
-    return newBox;
+    return new ChatBox(user1, user2);
 }
 void ChatManager::sendMessage(const Str& sender, const Str& receiver, const Str& content) {
     ChatBox* chat = loadOrCreateChat(sender, receiver);

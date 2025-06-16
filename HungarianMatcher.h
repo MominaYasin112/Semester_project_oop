@@ -1,22 +1,19 @@
-#ifndef HUNGARIANMATCHER_H
-#define HUNGARIANMATCHER_H
+#ifndef HUNGARIAN_MATCHER_H
+#define HUNGARIAN_MATCHER_H
 
-#include "Dynamic_array.h"
 #include "Student.h"
+#include "Dynamic_array.h"
 #include "Match.h"
-#include "Matcher.h" 
+#include "Matcher.h"
 
-class HungarianMatcher : public Matcher { 
-private:
-    int** createCostMatrix(const Dynamic_array<Student*>& students, int& size);
-    void freeCostMatrix(int** matrix, int size);
-    Dynamic_array<int> hungarianAlgorithm(int** costMatrix, int size);
-    int findBidirectionalSkillScore(Student* a, Student* b);
-
+class HungarianMatcher : public Matcher {
 public:
     Dynamic_array<Match*> generateMatches(Dynamic_array<Student*>& students) override;
-    Dynamic_array<Match*> generateOptimizedMatches(Dynamic_array<Student*>& students);
+
+private:
+    int findBidirectionalSkillScore(Student* a, Student* b);
     Str findCommonSkill(Student* a, Student* b);
+    unsigned simpleHash(const Str& str);
 };
 
 #endif

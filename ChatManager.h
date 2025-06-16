@@ -1,4 +1,3 @@
-// ChatManager.h
 #ifndef CHATMANAGER_H
 #define CHATMANAGER_H
 
@@ -22,6 +21,7 @@ public:
     void loadChats(const char* filename);
     const Dynamic_array<ChatBox*>& getChatBoxes() const;
     void listAllChatsForUser(const Str& user) const;
+    Str getChatFilename(const Str& user1, const Str& user2);
 };
 
 #endif

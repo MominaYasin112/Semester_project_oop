@@ -636,21 +636,16 @@ void Str::writeToBinary(ofstream& out) const {
 }
 
 void Str::readFromBinary(std::ifstream& in) {
-	int length;
-	in.read(reinterpret_cast<char*>(&length), sizeof(length));
-	if (length < 0 || length > 1000000) { 
-		throw std::runtime_error("Invalid string length in binary file");
+	int len = 0;
+	in.read(reinterpret_cast<char*>(&len), sizeof(len));
+
+	if (len <= 0 || len > 10000) { 
+		clear();
+		return;
 	}
-
-	char* buffer = new char[length + 1];
-	in.read(buffer, length);
-
-	if (!in) {
-		delete[] buffer;
-		throw std::runtime_error("Failed to read string content");
-	}
-
-	buffer[length] = '\0';
+	char* buffer = new char[len + 1];
+	in.read(buffer, len);
+	buffer[len] = '\0';
 	*this = Str(buffer);
 	delete[] buffer;
 }
@@ -687,4 +682,23 @@ Str Str::substring(int start, int end) const {
 	result.Cs[result.len] = '\0';
 
 	return result;
+}
+bool Str::operator>(const Str& other) const {
+	const char* thisStr = this->return_array();
+	const char* otherStr = other.return_array();
+	return strcmp(thisStr, otherStr) > 0;
+}
+
+bool Str::operator<(const Str& other) const {
+	const char* thisStr = this->return_array();
+	const char* otherStr = other.return_array();
+	return strcmp(thisStr, otherStr) < 0;
+}
+
+bool Str::operator>=(const Str& other) const {
+	return !(*this < other);
+}
+
+bool Str::operator<=(const Str& other) const {
+	return !(*this > other);
 }

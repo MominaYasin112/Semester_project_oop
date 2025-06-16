@@ -115,7 +115,7 @@ void Student::saveToBinary(ofstream& out) const {
     int exchCount = exchanges.size();
     out.write((char*)&exchCount, sizeof(exchCount));
     for (int i = 0; i < exchCount; ++i) {
-        int id = exchanges[i]->getId();
+        int id = exchanges[i]->getExchangeId();
         out.write((char*)&id, sizeof(id));
     }
 }

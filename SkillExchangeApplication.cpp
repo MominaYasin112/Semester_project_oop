@@ -6,7 +6,9 @@ SkillRepository skillRepo;
 using namespace std;
 #include <filesystem> 
 #include"UIComponent.h"
+#include "HungarianMatcher.h"
 namespace fs = filesystem; 
+
 
 
 SkillExchangeApplication::SkillExchangeApplication()
@@ -19,12 +21,11 @@ SkillExchangeApplication::SkillExchangeApplication()
     timeSlotPicker(6),
     deadlinePicker(7),
     registerButton(8, "Register", [this]() { handleRegistration(); }),
-    engine(&matcher),
+    engine(new HungarianMatcher(), &exchangeManager),
     isChatCreating(false)
 {
     authManager->loadFromFile("students.bin");
     loginWindow.setLoginCallback([this]() { handleLogin(); });
-    dashboard.setOnMatchClick([this]() { handleSkillMatching(); });
     dashboard.setOnChatClick([this]() { openPreviousChatBox(); });
     dashboard.setOnAddClick([this]() {
         isRegistering = true;
@@ -34,17 +35,21 @@ SkillExchangeApplication::SkillExchangeApplication()
         });
     dashboard.setOnStartNewChatClick([this]() { isChatCreating = true; });
     dashboard.setOnExitClick([]() { exit(0); });
-    dashboard.setOnMatchClick([this]() {
-        this->handleSkillMatching();
-        });
+    /*dashboard.setOnMatchClick([this]() {
+        this->showMatchResults();
+        });*/
     loginWindow.show();
-    exchangeManager.loadFromFile("exchanges.bin");
+   /* exchangeManager.loadFromFile("exchanges.bin");*/
+    
 
 }
 void SkillExchangeApplication::render() {
+    testMatchingConsole();
     static Str errorMessage;
     static bool showErrorPopup = false;
 
+    // Error popup (keep this at top level)
+    
     if (showErrorPopup) {
         ImGui::OpenPopup("Error");
         if (ImGui::BeginPopupModal("Error", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
@@ -58,6 +63,7 @@ void SkillExchangeApplication::render() {
         }
     }
 
+    // Registration window
     if (isRegistering) {
         ImGui::Begin("Register Skills", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 
@@ -80,18 +86,29 @@ void SkillExchangeApplication::render() {
 
         if (ImGui::Button("Register")) {
             try {
+                
                 loginWindow.setEmail(emailBuf);
                 loginWindow.setPassword(passBuf);
                 handleRegistration();
                 isRegistering = false;
                 loginWindow.show();
+
             }
             catch (const AppException& e) {
                 errorMessage = e.getMessage();
                 showErrorPopup = true;
             }
         }
+        if (ImGui::Button("EMERGENCY DEBUG")) {
+            std::cout << "\n==== MANUAL DEBUG ====\n";
+            std::cout << "ExchangeManager has "
+                << exchangeManager.getAllExchanges().size()
+                << " exchanges\n";
 
+            // Try saving manually
+            /*exchangeManager.saveToFile("DEBUG_exchanges.bin");*/
+            std::cout << "Manual save attempted to DEBUG_exchanges.bin\n";
+        }
         if (ImGui::Button("Cancel")) {
             isRegistering = false;
             loginWindow.show();
@@ -99,6 +116,7 @@ void SkillExchangeApplication::render() {
 
         ImGui::End();
     }
+    // Login window
     else if (loginWindow.visible()) {
         loginWindow.render();
 
@@ -109,53 +127,47 @@ void SkillExchangeApplication::render() {
         }
         ImGui::End();
     }
+    // Main dashboard
     else {
-        if (currentStudent)
+        if (currentStudent) {
             dashboard.setReputation(currentStudent->getReputationPoints());
+        }
 
         dashboard.render();
-        if (dashboard.isChatButtonPressed()) {
-            openPreviousChatBox();
+
+        // Handle dashboard button presses - CHECK ONCE PER FRAME
+        static bool matchProcessed = false;
+        if (dashboard.isMatchButtonPressed() && !matchProcessed) {
+            std::cout << "Match button pressed - calling showMatchResults()" << std::endl;
+            showMatchResults();
+            matchProcessed = true;
         }
+
+        // Reset the flag after one frame
+        if (matchProcessed) {
+            matchProcessed = false;
+        }
+
+        // Chat box
         if (chatBoxWidget.visible()) {
             chatBoxWidget.render();
-            ImGui::Separator();
 
             static char msgBuffer[256] = "";
             ImGui::InputText("Type message", msgBuffer, sizeof(msgBuffer));
 
             if (ImGui::Button("Send")) {
                 try {
-                    if (!currentStudent) {
-                        throw AuthException(Str("You must be logged in to send messages"));
-                    }
+                    if (!currentStudent) throw AuthException("Not logged in");
 
                     Str sender = currentStudent->getEmail();
                     Str receiver = chatBoxWidget.getOpponentEmail();
+                    Str message(msgBuffer);
 
-                    if (sender.empty() || receiver.empty()) {
-                        throw NetworkException(Str("Cannot send message - missing sender or receiver"));
-                    }
+                    if (message.empty()) throw NetworkException("Message empty");
 
-                    if (strlen(msgBuffer) == 0) {
-                        throw NetworkException(Str("Message cannot be empty"));
-                    }
-
-                    // Set the callback if not already set
-                    if (!chatBoxWidget.onSendCallback) {
-                        chatBoxWidget.onSendCallback = [this, sender, receiver]() {
-                            Str message = chatBoxWidget.getInputText();
-                            if (!message.empty()) {
-                                chatManager.sendMessage(sender, receiver, message);
-                                chatBoxWidget.receiveMessage(message);
-                                chatBoxWidget.clearInput();
-                            }
-                            };
-                    }
-                    if (chatBoxWidget.onSendCallback) {
-                        chatBoxWidget.onSendCallback();
-                        msgBuffer[0] = '\0';
-                    }
+                    chatManager.sendMessage(sender, receiver, message);
+                    chatBoxWidget.receiveMessage(Str("You: ").concat(message));
+                    msgBuffer[0] = '\0';
                 }
                 catch (const AppException& e) {
                     errorMessage = e.getMessage();
@@ -164,8 +176,20 @@ void SkillExchangeApplication::render() {
             }
         }
 
+        // Start new chat popup
         if (isChatCreating) {
             renderStartChatPopup();
+        }
+
+        if (debugMode) {
+            ImGui::Begin("Debug Info");
+            ImGui::Text("Students registered: %d", authManager->getAllRegisteredStudents().size());
+            if (currentStudent) {
+                ImGui::Text("Current user skills: %d offered, %d requested",
+                    currentStudent->getOfferedSkills().size(),
+                    currentStudent->getRequestedSkills().size());
+            }
+            ImGui::End();
         }
     }
 }
@@ -250,7 +274,163 @@ void SkillExchangeApplication::handleRegistration() {
         loginWindow.showErrorMessage(ex.getMessage());
     }
 }
+void SkillExchangeApplication::showMatchResults() {
+    std::cout << "\n==== DEBUG: MATCHING FLOW START ====\n";
 
+    // Get all students
+    Dynamic_array<Student*>& allStudents = authManager->getAllRegisteredStudents();
+    std::cout << "Total registered students: " << allStudents.size() << "\n";
+    for (int i = 0; i < allStudents.size(); ++i) {
+        std::cout << "Student " << i << ": " << allStudents[i]->getEmail().return_array() << "\n";
+        std::cout << "  Offered skills: ";
+        for (auto& skill : allStudents[i]->getOfferedSkills()) {
+            std::cout << skill->getName().return_array() << " ";
+        }
+        std::cout << "\n  Requested skills: ";
+        for (auto& skill : allStudents[i]->getRequestedSkills()) {
+            std::cout << skill->getName().return_array() << " ";
+        }
+        std::cout << "\n";
+    }
+
+    // Generate matches
+    Dynamic_array<Match*> matches = engine.matchStudents(allStudents);
+    std::cout << "Total matches found: " << matches.size() << "\n";
+    for (int i = 0; i < matches.size(); ++i) {
+        std::cout << "Match " << i << ": "
+            << matches[i]->getRequester()->getEmail().return_array() << " <-> "
+            << matches[i]->getProvider()->getEmail().return_array()
+            << " (Skill: " << matches[i]->getSkill().return_array() << ")\n";
+    }
+
+    // Popup management
+    static bool shouldOpenPopup = true;
+    if (shouldOpenPopup) {
+        ImGui::OpenPopup("Match Results");
+        shouldOpenPopup = false;
+    }
+
+    // Center the popup
+    ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+    ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+
+    if (ImGui::BeginPopupModal("Match Results", nullptr,
+        ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize))
+    {
+        if (matches.isEmpty()) {
+            ImGui::Text("No matches found!");
+            ImGui::Text("Make sure you have:");
+            ImGui::BulletText("At least 2 registered users");
+            ImGui::BulletText("Complementary skills (A offers what B requests)");
+        }
+        else {
+            ImGui::Text("Found %d matches:", matches.size());
+            ImGui::Separator();
+
+            // Display all matches
+            for (int i = 0; i < matches.size(); ++i) {
+                Match* match = matches[i];
+                ImGui::Text("Match %d:", i + 1);
+                ImGui::BulletText("%s (wants %s)",
+                    match->getRequester()->getEmail().return_array(),
+                    match->getSkill().return_array());
+                ImGui::BulletText("%s (offers %s)",
+                    match->getProvider()->getEmail().return_array(),
+                    match->getSkill().return_array());
+                ImGui::Spacing();
+            }
+
+            ImGui::Separator();
+
+            // Create Exchange Button - FULLY DEBUGGED VERSION
+            if (ImGui::Button("CREATE EXCHANGE", ImVec2(200, 40))) {
+                std::cout << "\n==== EXCHANGE CREATION STARTED ====\n";
+
+                try {
+                    Match* selectedMatch = matches[0]; // Using first match
+
+                    // 1. Get the ACTUAL skill objects from students
+                    OfferedSkill* offered = nullptr;
+                    for (auto skill : selectedMatch->getProvider()->getOfferedSkills()) {
+                        if (skill->getName() == selectedMatch->getSkill()) {
+                            offered = skill;
+                            break;
+                        }
+                    }
+
+                    RequestedSkill* requested = nullptr;
+                    for (auto skill : selectedMatch->getRequester()->getRequestedSkills()) {
+                        if (skill->getName() == selectedMatch->getSkill()) {
+                            requested = skill;
+                            break;
+                        }
+                    }
+
+                    if (!offered || !requested) {
+                        throw std::runtime_error("Could not find matching skills in student profiles");
+                    }
+
+                    // 2. Create the exchange
+                    Exchange* exchange = new Exchange(
+                        exchangeManager.getNextExchangeId(),
+                        offered,  // Use the actual offered skill from provider
+                        requested, // Use the actual requested skill from requester
+                        "Pending",
+                        DateTime::now()
+                    );
+
+                    // 3. Add to manager
+                    exchangeManager.addExchange(exchange);
+
+                    // 4. Save to file
+                    bool saveSuccess = false;
+                    try {
+                        /*exchangeManager.saveToFile("exchanges.bin");*/
+                        saveSuccess = true;
+                    }
+                    catch (...) {
+                        saveSuccess = false;
+                    }
+
+                    std::cout << "Exchange creation: " << (exchange ? "SUCCESS" : "FAILED") << "\n";
+                    std::cout << "File save: " << (saveSuccess ? "SUCCESS" : "FAILED") << "\n";
+                    std::cout << "Exchange details:\n";
+                    std::cout << "- ID: " << exchange->getExchangeId() << "\n";
+                    std::cout << "- Between: "
+                        << selectedMatch->getRequester()->getEmail().return_array() << " and "
+                        << selectedMatch->getProvider()->getEmail().return_array() << "\n";
+                    std::cout << "- Skill: " << selectedMatch->getSkill().return_array() << "\n";
+
+                    dashboard.showMessage("Exchange created successfully!");
+
+                    // Clean up
+                    for (auto match : matches) delete match;
+                    matches.clear();
+                    shouldOpenPopup = true;
+                    ImGui::CloseCurrentPopup();
+                }
+                catch (const std::exception& e) {
+                    std::cout << "EXCHANGE CREATION ERROR: " << e.what() << "\n";
+                    // FIX: Convert error message properly
+                    Str errorMsg = "Error: ";
+                    errorMsg = errorMsg.concat(e.what());
+                    dashboard.showMessage(errorMsg.return_array()); // Use return_array() for conversion
+                }
+            }
+
+            ImGui::SameLine();
+
+            // Close Button
+            if (ImGui::Button("Close", ImVec2(120, 0))) {
+                for (auto match : matches) delete match;
+                matches.clear();
+                shouldOpenPopup = true;
+                ImGui::CloseCurrentPopup();
+            }
+        }
+        ImGui::EndPopup();
+    }
+}
 void SkillExchangeApplication::showDashboard() {
     dashboard.show();
     chatBoxWidget.hide();
@@ -376,108 +556,54 @@ void SkillExchangeApplication::openChatBox() {
     }
 }
 
-void SkillExchangeApplication::handleSkillMatching() {
-    std::cout << "[DEBUG] handleSkillMatching() called!" << std::endl;
-
-    Dynamic_array<Student*>& allStudents = authManager->getAllRegisteredStudents();
-    std::cout << "[DEBUG] Total students: " << allStudents.size() << std::endl;
-
-    for (int i = 0; i < allStudents.size(); ++i) {
-        std::cout << "Student: " << allStudents[i]->getEmail().return_array() << std::endl;
-        auto offered = allStudents[i]->getOfferedSkills();
-        auto requested = allStudents[i]->getRequestedSkills();
-
-        std::cout << "  Offered: " << offered.size() << " | Requested: " << requested.size() << std::endl;
-    }
-
-    Dynamic_array<Match*> matches = engine.matchStudents(allStudents);
-    static bool matchesCreated = false;
-    ImGui::OpenPopup("Skill Matching");
-    static Dynamic_array<Exchange*> newExchanges;
-
-    if (ImGui::BeginPopup("Skill Matching")) {
-        if (matches.size() == 0) {
-            ImGui::Text("No valid matches found.");
-        }
-        else {
-            if (!matchesCreated) {
-                newExchanges.clear();
-                for (int i = 0; i < matches.size(); ++i) {
-                    Exchange* ex = engine.createExchangeFromMatch(matches[i], i + 1);
-
-                    if (ex != nullptr) {
-                        newExchanges.push(ex);
-                        exchangeManager.addExchange(ex);
-
-                        // Setup Chat if current student is part of match
-                        Student* requester = authManager->getStudentById(ex->getRequestedSkill()->getStudentId());
-                        Student* provider = authManager->getStudentById(ex->getOfferedSkill()->getStudentId());
-
-                        if (currentStudent != nullptr &&
-                            (currentStudent == requester || currentStudent == provider)) {
-
-                            Str currentEmail = currentStudent->getEmail();
-                            Str opponentEmail = (currentStudent == requester) ? provider->getEmail() : requester->getEmail();
-
-                            // Load or create chat
-                            ChatBox* box = chatManager.loadOrCreateChat(currentEmail, opponentEmail);
-                            chatBoxWidget = ChatBoxWidget(3);
-                            chatBoxWidget.setOpponentEmail(opponentEmail);
-                            chatBoxWidget.show();
-
-                            // Show previous messages
-                            for (int j = 0; j < box->getMessages().size(); ++j)
-                                chatBoxWidget.receiveMessage(box->getMessages()[j].getContent());
-
-                            // Set callback for sending
-                            chatBoxWidget.onSendCallback = [&]() {
-                                Str sender = currentStudent ? currentStudent->getEmail() : Str("");
-                                Str receiver = chatBoxWidget.getOpponentEmail();
-
-                                if (sender.empty() || receiver.empty()) {
-                                    std::cout << "Cannot send message: sender or receiver is empty.\n";
-                                    return;
-                                }
-                                chatBoxWidget.sendMessage(sender, receiver, chatManager);
-                                };
-                        }
-                    }
-                }
-                exchangeManager.saveToFile("exchanges.bin");
-                matchesCreated = true;
-            }
-
-            ImGui::Text("Match Results:");
-            for (int i = 0; i < newExchanges.size(); ++i) {
-                Student* req = authManager->getStudentById(newExchanges[i]->getRequestedSkill()->getStudentId());
-                Student* prov = authManager->getStudentById(newExchanges[i]->getOfferedSkill()->getStudentId());
-
-                if (req == nullptr || prov == nullptr) {
-                    std::cout << "[ERROR] Missing student during rendering!" << std::endl;
-                    continue;
-                }
-
-                Str skill = newExchanges[i]->getOfferedSkill()->getName();
-                ImGui::BulletText("Requester: %s | Provider: %s | Skill: %s",
-                    req->getEmail().return_array(),
-                    prov->getEmail().return_array(),
-                    skill.return_array());
-                ImGui::Indent();
-                ImGui::Text("Exchange ID: %d", newExchanges[i]->getId());
-                ImGui::Text("Status: %s", newExchanges[i]->getStatus().return_array());
-                ImGui::Text("Deadline: %s", newExchanges[i]->getRequestedSkill()->get_deadline().toString().return_array());
-                ImGui::Unindent();
-                ImGui::Separator();
-            }
-
-            if (ImGui::Button("OK")) {
-                matchesCreated = false;
-                ImGui::CloseCurrentPopup();
-            }
-        }
-        ImGui::EndPopup();
-    }
-}
+//void SkillExchangeApplication::handleSkillMatching() {
+//    Dynamic_array<Student*>& allStudents = authManager->getAllRegisteredStudents();
+//    Dynamic_array<Match*> matches = engine.matchStudents(allStudents);
+//
+//    if (matches.isEmpty()) {
+//        dashboard.showMessage("No matches found!");
+//    }
+//    else {
+//        ImGui::OpenPopup("Match Results");
+//
+//        if (ImGui::BeginPopupModal("Match Results", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+//            ImGui::Text("Found %d matches:", matches.size());
+//            for (int i = 0; i < matches.size(); ++i) {
+//                Student* requester = matches[i]->getRequester();
+//                Student* provider = matches[i]->getProvider();
+//                ImGui::BulletText("%s ↔ %s (Skill: %s)",
+//                    requester->getEmail().return_array(),
+//                    provider->getEmail().return_array(),
+//                    matches[i]->getSkill().return_array());
+//            }
+//
+//            if (ImGui::Button("Create Exchange", ImVec2(120, 0))) {
+//                Exchange* exchange = engine.createExchangeFromMatch(
+//                    matches[0],
+//                    exchangeManager.getNextExchangeId()
+//                );
+//
+//                if (exchange) {
+//                    exchangeManager.addExchange(exchange);
+//                    exchangeManager.saveToFile("exchanges.bin");
+//                    dashboard.showMessage("Exchange created successfully!");
+//                }
+//
+//                ImGui::CloseCurrentPopup();
+//            }
+//
+//            ImGui::SameLine();
+//            if (ImGui::Button("Cancel", ImVec2(120, 0))) {
+//                ImGui::CloseCurrentPopup();
+//            }
+//
+//            ImGui::EndPopup();
+//        }
+//    }
+//    for (int i = 0; i < matches.size(); ++i) {
+//        delete matches[i];
+//    }
+//}
 void SkillExchangeApplication::renderStartChatPopup() {
     static char opponentEmail[100] = ""; 
     static bool showErrorPopup = false;
@@ -633,4 +759,126 @@ void SkillExchangeApplication::handleMessageSending() {
         chatBoxWidget.receiveMessage(Str("You: ").concat(message));
         chatBoxWidget.clearInput();
     }
+}
+void SkillExchangeApplication::testMatchingConsole() {
+    std::cout << "\n==== TESTING MATCHING (CONSOLE ONLY) ====\n";
+
+    // Get all students
+    auto& students = authManager->getAllRegisteredStudents();
+    std::cout << "Registered Students (" << students.size() << "):\n";
+    for (int i = 0; i < students.size(); i++) {
+        std::cout << "[" << i << "] " << students[i]->getEmail().return_array()
+            << " (Rep: " << students[i]->getReputationPoints() << ")\n";
+        std::cout << "  Offers: ";
+        for (auto& skill : students[i]->getOfferedSkills()) {
+            std::cout << skill->getName().return_array() << " (ID:" << skill->getSkillId() << "), ";
+        }
+        std::cout << "\n  Requests: ";
+        for (auto& skill : students[i]->getRequestedSkills()) {
+            std::cout << skill->getName().return_array() << " (Deadline:"
+                << skill->get_deadline().toString().return_array() << "), ";
+        }
+        std::cout << "\n";
+    }
+
+    // Generate matches
+    auto matches = engine.matchStudents(students);
+    std::cout << "\nFound " << matches.size() << " potential matches:\n";
+
+    // Track matched students to prevent duplicates
+    Dynamic_array<Student*> alreadyMatched;
+
+    // Process each match
+    for (int i = 0; i < matches.size(); i++) {
+        auto* match = matches[i];
+        Student* requester = match->getRequester();
+        Student* provider = match->getProvider();
+
+        // Skip if either student is already matched
+        if (alreadyMatched.contains(requester) || alreadyMatched.contains(provider)) {
+            std::cout << "MATCH #" << i << " SKIPPED - Student already matched\n";
+            continue;
+        }
+
+        std::cout << "\nMATCH #" << i << ":\n";
+        std::cout << "  Requester: " << requester->getEmail().return_array()
+            << " wants " << match->getSkill().return_array() << "\n";
+        std::cout << "  Provider: " << provider->getEmail().return_array()
+            << " offers " << match->getSkill().return_array() << "\n";
+
+        // Check for bidirectional potential
+        bool isBidirectional = false;
+        Str reverseSkill;
+
+        // Look for reverse match
+        for (auto& reqSkill : provider->getRequestedSkills()) {
+            for (auto& provSkill : requester->getOfferedSkills()) {
+                if (reqSkill->getName() == provSkill->getName()) {
+                    isBidirectional = true;
+                    reverseSkill = reqSkill->getName();
+                    break;
+                }
+            }
+            if (isBidirectional) break;
+        }
+
+        if (isBidirectional) {
+            std::cout << "  BIDIRECTIONAL POTENTIAL FOUND!\n";
+            std::cout << "  Reverse skill: " << reverseSkill.return_array() << "\n";
+        }
+
+        // Create the exchange
+        Exchange* exchange = engine.createExchangeFromMatch(
+            match,
+            exchangeManager.getNextExchangeId()
+        );
+
+        if (exchange) {
+            std::cout << "  CREATED EXCHANGE:\n";
+            std::cout << "    ID: " << exchange->getExchangeId() << "\n";
+            std::cout << "    Skill: " << exchange->getOfferedSkill()->getName().return_array() << "\n";
+            std::cout << "    Status: " << exchange->getStatus().return_array() << "\n";
+            std::cout << "    Created: " << exchange->getCreatedDate().toString().return_array() << "\n";
+
+            // Add to manager and mark students as matched
+            exchangeManager.addExchange(exchange);
+            alreadyMatched.push(requester);
+            alreadyMatched.push(provider);
+
+            // If bidirectional, create reverse exchange
+            if (isBidirectional) {
+                Exchange* reverseExchange = new Exchange(
+                    exchangeManager.getNextExchangeId(),
+                    exchange->getRequestedSkill(),  // Reverse the skills
+                    exchange->getOfferedSkill(),
+                    "Pending",
+                    DateTime::now()
+                );
+
+                if (reverseExchange) {
+                    std::cout << "  CREATED BIDIRECTIONAL EXCHANGE:\n";
+                    std::cout << "    ID: " << reverseExchange->getExchangeId() << "\n";
+                    std::cout << "    Skill: " << reverseExchange->getOfferedSkill()->getName().return_array() << "\n";
+                    exchangeManager.addExchange(reverseExchange);
+                }
+            }
+        }
+        else {
+            std::cout << "  FAILED TO CREATE EXCHANGE\n";
+        }
+    }
+
+    // Save all exchanges
+    /*exchangeManager.saveToFile("exchanges.bin");*/
+    std::cout << "\nSaved " << exchangeManager.getAllExchanges().size()
+        << " exchanges to file\n";
+
+    // Clean up
+    for (auto* match : matches) {
+        delete match;
+    }
+
+    std::cout << "\n==== TEST COMPLETE ====\n";
+    std::cout << "Final Exchange Count: " << exchangeManager.getAllExchanges().size() << "\n";
+    std::cout << "Students Matched: " << alreadyMatched.size() << "/" << students.size() << "\n";
 }

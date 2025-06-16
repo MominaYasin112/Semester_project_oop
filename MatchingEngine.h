@@ -2,21 +2,20 @@
 #define MATCHING_ENGINE_H
 
 #include "Matcher.h"
-#include "Match.h"
-#include "Exchange.h"
-#include "DateTime.h"
-#include "Student.h"
-#include "Dynamic_array.h"
+#include "ExchangeManager.h"
 
 class MatchingEngine {
-    Matcher* strategy;
+private:
+    Matcher* matcher;
+    ExchangeManager* exchangeManager;
 
 public:
-    MatchingEngine(Matcher* strategy);
-    void setStrategy(Matcher* strategy);
+    MatchingEngine(Matcher* matcher) : matcher(matcher), exchangeManager(nullptr) {}
+    MatchingEngine(Matcher* matcher, ExchangeManager* exchangeManager)
+        : matcher(matcher), exchangeManager(exchangeManager) {
+    }
     Dynamic_array<Match*> matchStudents(Dynamic_array<Student*>& students);
     Exchange* createExchangeFromMatch(Match* match, int exchangeId);
 };
 
 #endif
-

@@ -12,6 +12,7 @@
 #include "ExchangeManager.h"
 #include"UIComponent.h"
 
+
 class SkillExchangeApplication {
 private:
     AuthenticationManager* authManager;
@@ -34,17 +35,20 @@ private:
     ChatManager chatManager;
     bool isChatCreating;
     bool showChatSelector;
+    bool debugMode = false;
 public:
     SkillExchangeApplication();
     void render();
     void handleLogin();
     void handleRegistration();
-    void handleSkillMatching();
+    /*void handleSkillMatching();*/
     void showDashboard();
     void renderStartChatPopup();
     void openChatBox();
     void openPreviousChatBox();
     void handleMessageSending();
+    void showMatchResults();
+    void testMatchingConsole();
 };
 
 #endif

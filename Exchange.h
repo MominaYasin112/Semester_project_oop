@@ -5,10 +5,9 @@
 #include "RequestedSkills.h"
 #include "DateTime.h"
 #include "Str.h"
-#include<iostream>
-using namespace std;
+#include <fstream>
+
 class Exchange {
-private:
     int exchangeId;
     OfferedSkill* offeredSkill;
     RequestedSkill* requestedSkill;
@@ -19,27 +18,38 @@ private:
 
 public:
     Exchange();
-    Exchange(int id, OfferedSkill* offered, RequestedSkill* requested, Str status, DateTime created);
+    Exchange(int id, OfferedSkill* offered, RequestedSkill* requested,
+        Str status, DateTime created);
     Exchange(const Exchange& other);
-    Exchange& operator=(const Exchange& other);
     ~Exchange();
-    int getId() const;
-    OfferedSkill* getOfferedSkill() const;
-    RequestedSkill* getRequestedSkill() const;
-    Str getStatus() const;
-    DateTime getCreatedDate() const;
-    DateTime getCompletedDate() const;
-    int getRating() const;
+
+    Exchange& operator=(const Exchange& other);
+
+    // Getters
+    int getExchangeId() const { return exchangeId; }
+    OfferedSkill* getOfferedSkill() const { return offeredSkill; }
+    RequestedSkill* getRequestedSkill() const { return requestedSkill; }
+    Str getStatus() const { return status; }
+    DateTime getCreatedDate() const { return createdDate; }
+    DateTime getCompletedDate() const { return completedDate; }
+    int getRating() const { return rating; }
+
+    // Setters
     void setStatus(Str newStatus);
     void setCompletedDate(DateTime date);
     void setRating(int score);
-    bool initiateExchange();
-    bool completeExchange(); 
-    bool cancelExchange(); 
-    void writeToBinary(std::ofstream& out) const;
-    void readFromBinary(std::ifstream& in);
-    bool involves(const Str& email) const;
 
+    // Operations
+    bool initiateExchange();
+    bool completeExchange();
+    bool cancelExchange();
+
+    // Serialization
+  /*  void writeToBinary(std::ofstream& out) const;
+    void readFromBinary(std::ifstream& in);*/
+
+    // Debug
+ /*   void debugPrint() const;*/
 };
 
 #endif
