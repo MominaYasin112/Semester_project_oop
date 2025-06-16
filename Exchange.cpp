@@ -7,16 +7,12 @@ Exchange::Exchange(int id, OfferedSkill* offered, RequestedSkill* requested, Str
     : exchangeId(id), offeredSkill(offered), requestedSkill(requested),
     status(status), createdDate(created), completedDate(DateTime()), rating(0) {
 }
-
-// Copy constructor
 Exchange::Exchange(const Exchange& other)
     : exchangeId(other.exchangeId), offeredSkill(other.offeredSkill),
     requestedSkill(other.requestedSkill), status(other.status),
     createdDate(other.createdDate), completedDate(other.completedDate),
     rating(other.rating) {
 }
-
-// Assignment operator
 Exchange& Exchange::operator=(const Exchange& other) {
     if (this != &other) {
         exchangeId = other.exchangeId;
@@ -62,7 +58,7 @@ bool Exchange::initiateExchange() {
 bool Exchange::completeExchange() {
     if (status == "in_progress") {
         status = "completed";
-        completedDate = DateTime(); // now
+        completedDate = DateTime();
         return true;
     }
     return false;

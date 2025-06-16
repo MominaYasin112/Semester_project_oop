@@ -1,7 +1,5 @@
-// Socket.cpp
 #include "Socket.h"
 #include"AppException.h"
-// Initialize static member
 int Socket::nextSocketId = 1;
 
 Socket::Socket() : socketId(-1), port(-1) {}

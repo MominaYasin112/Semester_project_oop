@@ -1,4 +1,3 @@
-// DummyClient.h
 #ifndef DUMMY_CLIENT_H
 #define DUMMY_CLIENT_H
 

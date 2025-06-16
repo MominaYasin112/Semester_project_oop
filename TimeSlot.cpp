@@ -1,5 +1,6 @@
 #include "TimeSlot.h"
 #include <iostream>
+#include <fstream> 
 using namespace std;
 
 TimeSlot::TimeSlot() : isBooked(false) {}
@@ -73,7 +74,7 @@ void TimeSlot::display() const {
 Str TimeSlot::toString() const {
     return startTime.toString().concat(" - ").concat(endTime.toString());
 }
-#include <fstream> // for ofstream/ifstream
+
 
 void TimeSlot::saveToBinary(std::ofstream& out) const {
     startTime.writeToBinary(out);

@@ -1,4 +1,3 @@
-// DummyServer.h
 #ifndef DUMMY_SERVER_H
 #define DUMMY_SERVER_H
 

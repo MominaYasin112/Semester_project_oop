@@ -380,8 +380,6 @@ public:
     }
 
     int reputation = 0;
-
-    // Button state checkers
     bool isChatButtonPressed() {
         bool state = chatButtonPressed;
         chatButtonPressed = false;
@@ -424,7 +422,7 @@ public:
         ImGui::Text("Reputation: %d", reputation);
         ImGui::Separator();
 
-        // Render buttons and check clicks
+        // render buttons and check click
         skillMatchBtn.render();
         chatBoxBtn.render();
         startNewChatBtn.render();
@@ -434,7 +432,7 @@ public:
         ImGui::End();
     }
 
-    // Callback setters
+    // Callback setter
     void setOnMatchClick(std::function<void()> cb) {
         skillMatchBtn = Button(skillMatchBtn.getId(), "Find Matches",
             [this, cb]() { matchButtonPressed = true; if (cb) cb(); });

@@ -11,8 +11,6 @@ Dynamic_array<Match*> MatchingEngine::matchStudents(Dynamic_array<Student*>& stu
 Exchange* MatchingEngine::createExchangeFromMatch(Match* match, int exchangeId) {
     OfferedSkill* offered = nullptr;
     RequestedSkill* requested = nullptr;
-
-    // Find the correct offered skill by skill name
     for (int i = 0; i < match->getProvider()->getOfferedSkills().size(); i++) {
         if (match->getProvider()->getOfferedSkills()[i]->getName().is_equal(match->getSkill())) {
             offered = match->getProvider()->getOfferedSkills()[i];

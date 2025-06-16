@@ -36,7 +36,7 @@ int HungarianMatcher::findBidirectionalSkillScore(Student* a, Student* b) {
     }
 
     if (a_requests_b && b_requests_a) {
-        std::cout << "✅ Bidirectional Match Found Between "
+        std::cout << "Bidirectional Match Found Between "
             << a->getEmail().return_array() << " and "
             << b->getEmail().return_array() << " for "
             << commonSkill.return_array() << std::endl;
@@ -54,7 +54,7 @@ int** HungarianMatcher::createCostMatrix(const Dynamic_array<Student*>& students
         costMatrix[i] = new int[size];
         for (int j = 0; j < size; ++j) {
             if (i == j) {
-                costMatrix[i][j] = std::numeric_limits<int>::max(); // No self-match
+                costMatrix[i][j] = std::numeric_limits<int>::max();
             }
             else {
                 costMatrix[i][j] = -findBidirectionalSkillScore(students[i], students[j]);

@@ -600,15 +600,12 @@ void SkillExchangeApplication::openPreviousChatBox() {
 
         if (selected >= 0 && ImGui::Button("Open Chat")) {
             try {
-                // Load the chat
                 ChatBox* chat = chatManager.loadOrCreateChat(
                     currentEmail,
                     chatPartners[selected]
                 );
                 chatBoxWidget = ChatBoxWidget(3);
                 chatBoxWidget.setOpponentEmail(chatPartners[selected]);
-
-                // Load messages with proper prefixes
                 for (int i = 0; i < chat->getMessages().size(); i++) {
                     const Message& m = chat->getMessages()[i];
                     Str prefix = (m.getSender().is_equal(currentEmail)) ? Str("You: ") : Str("Them: ");
@@ -616,7 +613,7 @@ void SkillExchangeApplication::openPreviousChatBox() {
                 }
 
                 chatBoxWidget.show();
-                selected = -1; // Reset selection
+                selected = -1; 
             }
             catch (...) {
                 std::cerr << "Failed to load chat" << std::endl;

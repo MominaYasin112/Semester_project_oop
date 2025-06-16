@@ -1,4 +1,3 @@
-// DummyClient.cpp
 #include "DummyClient.h"
 #include "DummyServer.h"
 #include "AppException.h"

@@ -44,12 +44,12 @@ void Message::writeToBinary(ofstream& out) const {
     sender.writeToBinary(out);
     receiver.writeToBinary(out);
     content.writeToBinary(out);
-    timestamp.writeToBinary(out); // implement in DateTime
+    timestamp.writeToBinary(out);
 }
 
 void Message::readFromBinary(ifstream& in) {
     sender.readFromBinary(in);
     receiver.readFromBinary(in);
     content.readFromBinary(in);
-    timestamp.readFromBinary(in); // implement in DateTime
+    timestamp.readFromBinary(in);
 }
