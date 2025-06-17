@@ -5,6 +5,7 @@ Message::Message() : sender(""), receiver(""), content(""), timestamp(DateTime::
 
 Message::Message(const Str& s, const Str& r, const Str& c) {
     if (s.empty() || r.empty()) {
+        std::cout << "Sender: " << sender.return_array() << ", Receiver: " << receiver.return_array() << std::endl;
         throw NetworkException("Message requires both sender and receiver");
     }
     sender = s;

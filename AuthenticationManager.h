@@ -31,6 +31,15 @@ public:
     Student* getStudentById(int studentId);
     Dynamic_array<Student*>& getAllRegisteredStudents();
     bool isEmailRegistered(const Str& email) const;
+    bool isLoggedIn() const {
+        return currentUser != nullptr;
+    }
+    void logout() {
+        currentUser = nullptr;
+    }
+    Student* getLoggedInUser() {
+        return dynamic_cast<Student*>(currentUser);
+    }
 };
 
 #endif

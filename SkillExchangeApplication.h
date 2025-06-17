@@ -36,19 +36,25 @@ private:
     bool isChatCreating;
     bool showChatSelector;
     bool debugMode = false;
+    bool isMatchDropdownVisible = false;
+    int selectedMatchIndex = -1;
+    Dynamic_array<Match> matchResults;
+    Str lastExchangeMessage;
+    float messageDisplayTime = 0.0f;
+    bool showMessage = false;
+    bool chatPopupOpened = false;
+    bool showChatBoxWindow = false;
 public:
     SkillExchangeApplication();
     void render();
     void handleLogin();
     void handleRegistration();
-    /*void handleSkillMatching();*/
     void showDashboard();
     void renderStartChatPopup();
     void openChatBox();
     void openPreviousChatBox();
     void handleMessageSending();
     void showMatchResults();
-    void testMatchingConsole();
 };
 
 #endif

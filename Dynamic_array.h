@@ -15,7 +15,15 @@ public:
         len = 0;
         arr = new T[cap];
     }
-
+    Dynamic_array(std::initializer_list<T> list) {
+        cap = list.size() > 0 ? list.size() * 2 : 2;
+        len = list.size();
+        arr = new T[cap];
+        int i = 0;
+        for (const T& val : list) {
+            arr[i++] = val;
+        }
+    }
     Dynamic_array(int count, T value) {
         cap = count;
         len = count;

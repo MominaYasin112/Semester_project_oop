@@ -125,10 +125,16 @@ private:
     Button sendButton;
     Dynamic_array<Str> messageList;
     Str opponentEmail;
+    ChatBox* currentChatBox = nullptr;
 
 public:
     std::function<void()> onSendCallback;
-
+    void setChatBox(ChatBox* box) {
+        currentChatBox = box;
+    }
+    ChatBox* getChatBox() const { 
+        return currentChatBox;
+    }
     ChatBoxWidget(int id)
         : UIComponent(id),
         inputField(id + 1, "Type your message..."),
@@ -183,9 +189,12 @@ public:
         messageList.push(msg);
     }
     void loadPreviousMessages(ChatManager& manager, const Str& sender, const Str& receiver) {
-        messageList.clear();
+        messageList.clear(); // Good
         ChatBox* chat = manager.loadOrCreateChat(sender, receiver);
+
         const Dynamic_array<Message>& msgs = chat->getMessages();
+        std::cout << "Loaded " << msgs.size() << " messages\n";
+
         for (int i = 0; i < msgs.size(); ++i) {
             const Message& m = msgs[i];
             Str tag = (m.getSender().is_equal(sender)) ? "You: " : "Them: ";
@@ -198,6 +207,7 @@ public:
     void clearInput() {
         inputField.setText("");
     }
+
 };
 //To choose skills from dropdowm instead of input to avoid spelling errors
 class SkillDropdown : public UIComponent {
@@ -372,7 +382,7 @@ private:
 public:
     Dashboard(int id)
         : UIComponent(id),
-        skillMatchBtn(Button(id + 1, "Find Matches", [this]() { matchButtonPressed = true; })),
+        skillMatchBtn(Button(id + 1, "Show Exchanges", [this]() { matchButtonPressed = true; })),
         chatBoxBtn(Button(id + 2, "Open ChatBox", [this]() { chatButtonPressed = true; })),
         startNewChatBtn(Button(id + 3, "Start New Chat", [this]() { newChatButtonPressed = true; })),
         addSkillBtn(Button(id + 4, "Add Skills", [this]() { addSkillButtonPressed = true; })),

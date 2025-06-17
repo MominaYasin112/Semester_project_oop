@@ -702,3 +702,30 @@ bool Str::operator>=(const Str& other) const {
 bool Str::operator<=(const Str& other) const {
 	return !(*this > other);
 }
+bool Str::startsWith(const Str& prefix) const {
+	if (prefix.length(return_array()) > this->length(return_array())) return false;
+	for (int i = 0; i < prefix.length(return_array()); i++) {
+		if (Cs[i] != prefix.Cs[i]) return false;
+	}
+	return true;
+}
+
+bool Str::endsWith(const Str& suffix) const {
+	int len = this->length(return_array());
+	int suffLen = suffix.length(return_array());
+	if (suffLen > len) return false;
+	for (int i = 0; i < suffLen; i++) {
+		if (Cs[len - suffLen + i] != suffix.Cs[i]) return false;
+	}
+	return true;
+}
+bool Str::contains(const char* substr) const {
+	return strstr(this->Cs, substr) != nullptr;
+}
+void Str::replace(char from, char to) {
+	for (int i = 0; i < len; i++) {
+		if (Cs[i] == from) {
+			Cs[i] = to;
+		}
+	}
+}

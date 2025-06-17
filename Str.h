@@ -76,6 +76,10 @@ public:
 	bool operator<(const Str& other) const;
 	bool operator>=(const Str& other) const;
 	bool operator<=(const Str& other) const;
+	bool endsWith(const Str& suffix) const;
+	bool startsWith(const Str& prefix) const;
+	bool contains(const char* substr) const;
+	void replace(char from, char to);
 };
 #endif
 
